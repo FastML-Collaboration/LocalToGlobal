@@ -490,7 +490,7 @@ struct simple_coords_t {
 constexpr int NUM_CHIPS_PER_STAVE = 9;
 
 // The position is not currently used
-simple_coords_t getCoords(ap_uint<3> layer, ap_uint<5> stave, ap_uint<4> chip,
+simple_coords_t getCoords(ap_uint<2> layer, ap_uint<5> stave, ap_uint<4> chip,
                           ap_ufixed<11, 10> col, ap_ufixed<10,9> row) {
 
 # pragma HLS pipeline
