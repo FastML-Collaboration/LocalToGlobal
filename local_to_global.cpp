@@ -273,7 +273,7 @@ const coords_t mapL1[] = {
   {  3.8912,    -0.6905,    8.3358,    0.98462,  -0.17470 },
   {  3.8927,    -0.6897,   11.3519,    0.98466,  -0.17450 }
 };
- 
+
 const coords_t mapL2[] = {
   {  4.7012,     0.5061,  -12.7608,    0.99426,   0.10699 },
   {   4.702,     0.5078,   -9.7468,    0.99422,   0.10739 },
@@ -480,40 +480,43 @@ const phitilt_t phiTilts[] = {
   { 0.95612798, 0.29294929 }
 };
 
-struct simple_coords_t {
+struct out_t {
   x_t x;
   y_t y;
   z_t z;
+  ap_uint<4> nConstituents;
+  ap_uint<1> bcid;
 };
 
 
 constexpr int NUM_CHIPS_PER_STAVE = 9;
 
-// The position is not currently used
-simple_coords_t getCoords(ap_uint<2> layer, ap_uint<5> stave, ap_uint<4> chip,
-                          ap_ufixed<11, 10> col, ap_ufixed<10,9> row) {
+// bcid is used to indicate that it's the end of the bcid
+void getCoords(ap_uint<1> bcid, ap_uint<2> layer, ap_uint<5> stave, ap_uint<4> chip,
+               ap_ufixed<11, 10> col, ap_ufixed<10,9> row, ap_uint<4> nConstituents, out_t& outval) {
 
-# pragma HLS pipeline
+#pragma HLS pipeline
+#pragma HLS AGGREGATE variable=outval compact=bit
+#pragma HLS interface mode=ap_none port=outval
 
   const ap_ufixed<8, -7> pix_phi = 0.002688;
   const ap_ufixed<8, -7> pix_z = 0.002924;
 
   coords_t coords;
-  if (layer == 0) {
-    coords = mapL0[stave*NUM_CHIPS_PER_STAVE + chip];
-  } else if (layer == 1) {
-    coords = mapL1[stave*NUM_CHIPS_PER_STAVE + chip];
-  } else {
-    coords = mapL2[stave*NUM_CHIPS_PER_STAVE + chip];
+  if (bcid == 0) {
+    if (layer == 0) {
+      coords = mapL0[stave*NUM_CHIPS_PER_STAVE + chip];
+    } else if (layer == 1) {
+      coords = mapL1[stave*NUM_CHIPS_PER_STAVE + chip];
+    } else {
+      coords = mapL2[stave*NUM_CHIPS_PER_STAVE + chip];
+    }
   }
+  auto phitilt = (bcid == 0) ? phiTilts[layer] : phitilt_t{0, 0};
 
-  auto phitilt = phiTilts[layer];
-
-  simple_coords_t fixed_coords;
-
-  fixed_coords.z = coords.z + col * pix_z;
-  fixed_coords.y = coords.y + row * (coords.cosphi * phitilt.cosphi - coords.sinphi * phitilt.sinphi);
-  fixed_coords.x = coords.z - row * (coords.sinphi * phitilt.cosphi + coords.cosphi * phitilt.sinphi);
-
-  return fixed_coords;
+  outval.z = coords.z + col * pix_z;
+  outval.y = coords.y + row * (coords.cosphi * phitilt.cosphi - coords.sinphi * phitilt.sinphi);
+  outval.x = coords.z - row * (coords.sinphi * phitilt.cosphi + coords.cosphi * phitilt.sinphi);
+  outval.nConstituents = nConstituents;
+  outval.bcid = bcid;
 }
