@@ -1,20 +1,4 @@
-#include "ap_fixed.h"
-#include "ap_int.h"
-
-using x_t = ap_fixed<16, 4, AP_RND>;
-using y_t = ap_fixed<16, 4, AP_RND>;
-using z_t = ap_fixed<16, 6, AP_RND>;
-using r_t = ap_ufixed<16, 3, AP_RND>;
-using sincos_t = ap_fixed<16, 2, AP_RND>;
-
-struct coords_t {
-  x_t x;
-  y_t y;
-  z_t z;
-  sincos_t cosphi;
-  sincos_t sinphi;
-};
-
+#include "local_to_global.h"
 
 const coords_t mapL0[] = {
   {  3.1268,     0.4325,   -12.729,    0.99058,   0.13697 },
@@ -478,14 +462,6 @@ const phitilt_t phiTilts[] = {
   { 0.97308189, 0.23045963 },
   { 0.95668868, 0.29111298 },
   { 0.95612798, 0.29294929 }
-};
-
-struct out_t {
-  x_t x;
-  y_t y;
-  z_t z;
-  ap_uint<4> nConst_or_chipid;
-  ap_uint<1> bcid;
 };
 
 
