@@ -484,7 +484,7 @@ struct out_t {
   x_t x;
   y_t y;
   z_t z;
-  ap_uint<4> nConstituents;
+  ap_uint<4> nConst_or_chipid;
   ap_uint<1> bcid;
 };
 
@@ -517,6 +517,6 @@ void getCoords(ap_uint<1> bcid, ap_uint<2> layer, ap_uint<5> stave, ap_uint<4> c
   outval.z = coords.z + col * pix_z;
   outval.y = coords.y + row * (coords.cosphi * phitilt.cosphi - coords.sinphi * phitilt.sinphi);
   outval.x = coords.z - row * (coords.sinphi * phitilt.cosphi + coords.cosphi * phitilt.sinphi);
-  outval.nConstituents = nConstituents;
+  outval.nConst_or_chipid = (bcid == 0) ? nConstituents : chip;
   outval.bcid = bcid;
 }
