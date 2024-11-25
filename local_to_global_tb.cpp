@@ -5,6 +5,7 @@
 #include<map>
 #include<array>
 #include<cmath>
+#include "local_to_global.h"
 
 struct coord_t {
     float x;
@@ -26,9 +27,9 @@ simple_coord_t correctCoords(coord_t centers, float tilt, float col, float row) 
     const float pix_z = 0.002924;
 
     simple_coord_t rv;
-    rv.z = centers.z + row * pix_z;
-    rv.y = centers.y + col * std::cos(centers.phi + tilt);
-    rv.x = centers.x - col * std::sin(centers.phi + tilt);
+    rv.z = centers.z + col * pix_z;
+    rv.y = centers.y + row * pix_phi * std::cos(centers.phi + tilt);
+    rv.x = centers.x - row * pix_phi * std::sin(centers.phi + tilt);
 
     return rv;
 }
@@ -69,6 +70,8 @@ int main() {
     }
 
 
+    int exit_code = 0;
+
     for (std::string iline; std::getline(testVectors, iline);) {
         std::stringstream ssline(iline);
 
@@ -76,11 +79,19 @@ int main() {
         float col, row;
         ssline >> layer >> stave >> chip >> col >> row;
 
-        // std::cout << layer << ", " << stave << ", " << chip << ", "
-        //     << x << ", " << y << ", " << z << ", " << r << ", " << phi << std::endl;
-
         auto center_coord = positionMap[std::make_tuple(layer, stave, chip)];
         auto corCoord = correctCoords(center_coord, phitilt[layer], col, row);
-        std::cout << corCoord.x << ", " << corCoord.y << ", " << corCoord.z << std::endl;
+        out_t outval;  // these are the 
+        getCoords(0, layer, stave, chip, col, row, 3, outval);
+        std::cout << "Emulated: " << corCoord.x << ", " << corCoord.y << ", " << corCoord.z 
+            << "\nHLS:      " << outval.x << ", " << outval.y << ", " << outval.z  << std::endl << std::endl;
+        if (std::abs(corCoord.x - outval.x.to_float()) > 0.003 ||
+            std::abs(corCoord.y - outval.y.to_float()) > 0.003 ||
+            std::abs(corCoord.z - outval.z.to_float()) > 0.03) {
+                
+            std::cerr << "MISMATCH FOUND" << std::endl;
+            exit_code = 1;
+        }
     }
+    return exit_code;
 }

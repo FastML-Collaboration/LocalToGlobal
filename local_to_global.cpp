@@ -491,8 +491,8 @@ void getCoords(ap_uint<1> bcid, ap_uint<2> layer, ap_uint<5> stave, ap_uint<4> c
   auto phitilt = (bcid == 0) ? phiTilts[layer] : phitilt_t{0, 0};
 
   outval.z = coords.z + col * pix_z;
-  outval.y = coords.y + row * (coords.cosphi * phitilt.cosphi - coords.sinphi * phitilt.sinphi);
-  outval.x = coords.z - row * (coords.sinphi * phitilt.cosphi + coords.cosphi * phitilt.sinphi);
+  outval.y = coords.y + row * pix_phi * (coords.cosphi * phitilt.cosphi - coords.sinphi * phitilt.sinphi);
+  outval.x = coords.x - row * pix_phi * (coords.sinphi * phitilt.cosphi + coords.cosphi * phitilt.sinphi);
   outval.nConst_or_chipid = (bcid == 0) ? nConstituents : chip;
   outval.bcid = bcid;
 }
