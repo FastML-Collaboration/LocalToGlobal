@@ -8,18 +8,12 @@
 #include "local_to_global.h"
 
 struct coord_t {
-    float x;
-    float y;
-    float z;
     float r;
     float phi;
 };
 
-struct simple_coord_t {
-    float x;
-    float y;
-    float z;
-};
+using simple_coord_t = coord_t;
+
 
 // row and column are in steps of 0.5
 simple_coord_t correctCoords(coord_t centers, float tilt, float col, float row) {
@@ -28,8 +22,12 @@ simple_coord_t correctCoords(coord_t centers, float tilt, float col, float row) 
 
     simple_coord_t rv;
     rv.z = centers.z + col * pix_z;
-    rv.y = centers.y + row * pix_phi * std::cos(centers.phi + tilt);
-    rv.x = centers.x - row * pix_phi * std::sin(centers.phi + tilt);
+
+    auto x = centers.r * std::cos(tilt);
+    auto y = centers.r * std::sin(tilt) -  row * pix_phi;
+
+    rv.r = std::hypot(x, y);
+    rv.phi = centers.phi + tilt - std::arctan2(y, x);
 
     return rv;
 }
@@ -56,7 +54,7 @@ int main() {
             // std::cout << layer << ", " << stave << ", " << chip << ", "
             //     << x << ", " << y << ", " << z << ", " << r << ", " << phi << std::endl;
 
-            coord_t coord{x, y, z, r, phi};
+            coord_t coord{r, phi};
             positionMap[std::make_tuple(layer, stave, chip)] = coord;
         }
     }
@@ -81,14 +79,14 @@ int main() {
 
         auto center_coord = positionMap[std::make_tuple(layer, stave, chip)];
         auto corCoord = correctCoords(center_coord, phitilt[layer], col, row);
-        out_t outval;  // these are the 
+        out_t outval;  // these are the
         getCoords(0, layer, stave, chip, col, row, 3, outval);
-        std::cout << "Emulated: " << corCoord.x << ", " << corCoord.y << ", " << corCoord.z 
+        std::cout << "Emulated: " << corCoord.x << ", " << corCoord.y << ", " << corCoord.z
             << "\nHLS:      " << outval.x << ", " << outval.y << ", " << outval.z  << std::endl << std::endl;
-        if (std::abs(corCoord.x - outval.x.to_float()) > 0.003 ||
-            std::abs(corCoord.y - outval.y.to_float()) > 0.003 ||
+        if (std::abs(corCoord.r - outval.r.to_float()) > 0.003 ||
+            std::abs(corCoord.phi - outval.phi.to_float()) > 0.003 ||
             std::abs(corCoord.z - outval.z.to_float()) > 0.03) {
-                
+
             std::cerr << "MISMATCH FOUND" << std::endl;
             exit_code = 1;
         }
