@@ -454,12 +454,14 @@ const coords_t mapL2[] = {
 struct phitilt_t {
   sincos_t cosphi;
   sincos_t sinphi;
+  sincos_t cos2phi;
+  sincos_t sincosphi;
 };
 
 const phitilt_t phiTilts[] = {
-  { 0.97308189, 0.23045963 },
-  { 0.95668868, 0.29111298 },
-  { 0.95612798, 0.29294929 }
+  { 0.97308189, 0.23045963, 0.94688836, 0.22425609 },
+  { 0.95668868, 0.29111298, 0.91525323, 0.27850449 },
+  { 0.95612798, 0.29294929, 0.91418071, 0.28009701 }
 };
 
 
@@ -496,8 +498,8 @@ void getCoords(ap_uint<1> bcid, ap_uint<2> layer, ap_uint<5> stave, ap_uint<4> c
 
   outval.z = coords.z + (col - 511) * pix_z;
   outval.phi = coords.phi + delrow * phitilt.cosphi * coords.r_inv
-    + delrow * delrow * phitilt.sinphi * phitilt.cosphi * coords.r_inv * coords.r_inv;
-  outval.r = coords.r - delrow * phitilt.sinphi + delrow * delrow * phitilt.cosphi * phitilt.cosphi * coords.r_inv * half;
+    + delrow * delrow * phitilt.sincosphi * coords.r_inv * coords.r_inv;
+  outval.r = coords.r - delrow * phitilt.sinphi + delrow * delrow * phitilt.cos2phi * coords.r_inv * half;
   outval.nConst_or_chipid = (bcid == 0) ? nConstituents : chip;
   outval.bcid = bcid;
 }
