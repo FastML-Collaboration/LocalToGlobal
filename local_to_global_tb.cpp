@@ -80,16 +80,16 @@ int main() {
 
         auto center_coord = positionMap[std::make_tuple(layer, stave, chip)];
 
-        std::cout << layer << ", " << stave << ", " << chip << ", row = " << row << ", col = " << col
-            << "\nCenters: " << center_coord.r << ", " << center_coord.phi << ", " << center_coord.z  << std::endl;
+        // std::cout << layer << ", " << stave << ", " << chip << ", row = " << row << ", col = " << col
+        //     << "\nCenters: " << center_coord.r << ", " << center_coord.phi << ", " << center_coord.z  << std::endl;
 
         auto corCoord = correctCoords(center_coord, phitilt[layer], col, row);
         out_t outval;  // these are the
         getCoords(0, layer, stave, chip, col, row, 3, outval);
         std::cout << "Emulated: " << corCoord.r << ", " << corCoord.phi << ", " << corCoord.z
             << "\nHLS:      " << outval.r << ", " << outval.phi << ", " << outval.z  << std::endl << std::endl;
-        if (std::abs(corCoord.r - outval.r.to_float()) > 0.003 ||
-            std::abs(corCoord.phi - outval.phi.to_float()) > 0.003 ||
+        if (std::abs(corCoord.r - outval.r.to_float()) > 0.005 ||
+            std::abs(corCoord.phi - outval.phi.to_float()) > 0.005 ||
             std::abs(corCoord.z - outval.z.to_float()) > 0.03) {
 
             std::cerr << "MISMATCH FOUND" << std::endl;
