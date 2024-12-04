@@ -476,7 +476,9 @@ void getCoords(ap_uint<1> bcid, ap_uint<2> layer, ap_uint<5> stave, ap_uint<4> c
   const ap_ufixed<8, -7> pix_phi = 0.002688;
   const ap_ufixed<8, -7> pix_z = 0.002924;
 
-  auto delrow = row * pix_phi;
+  auto delrow = (row - 255) * pix_phi;
+
+  std::cout << "delrow = " << delrow << std::endl;
 
   coords_t coords;
   if (bcid == 0) {
@@ -490,11 +492,22 @@ void getCoords(ap_uint<1> bcid, ap_uint<2> layer, ap_uint<5> stave, ap_uint<4> c
   }
   auto phitilt = (bcid == 0) ? phiTilts[layer] : phitilt_t{0, 0};
 
+  // using order 2 Taylor expansion
 
-  // using one-term Taylor expansion
-  outval.z = coords.z + col * pix_z;
-  outval.phi = coords.phi + delrow * phitilt.cosphi * (1/coords.r);
-  outval.r = coords.r - delrow * phitilt.sinphi;
+  ap_ufixed<1, 0> half = 0.5;
+  ap_uint<1> one = 1;
+  std::cout << "coords.r = " << coords.r << std::endl;
+  auto r_inv = one / coords.r;
+  std::cout << "r_inv = " << r_inv << std::endl; 
+
+  std::cout << "delphipart = "<< delrow * delrow << std::endl;
+  std::cout << "delphi2 = "<< delrow * delrow * phitilt.sinphi * phitilt.cosphi * r_inv * r_inv << std::endl;
+  std::cout << "delr2 = "<< delrow * delrow * phitilt.sinphi * phitilt.cosphi * r_inv * r_inv * half << std::endl;
+
+  outval.z = coords.z + (col - 511) * pix_z;
+  outval.phi = coords.phi + delrow * phitilt.cosphi * r_inv
+    + delrow * delrow * phitilt.sinphi * phitilt.cosphi * r_inv * r_inv;
+  outval.r = coords.r - delrow * phitilt.sinphi + delrow * delrow * phitilt.cosphi * phitilt.cosphi * r_inv * half;
   outval.nConst_or_chipid = (bcid == 0) ? nConstituents : chip;
   outval.bcid = bcid;
 }

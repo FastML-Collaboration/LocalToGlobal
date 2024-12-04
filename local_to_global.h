@@ -17,7 +17,7 @@ struct coords_t {
 
 struct out_t {
   r_t r;
-  phi_t y;
+  phi_t phi;
   z_t z;
   ap_uint<4> nConst_or_chipid;
   ap_uint<1> bcid;

@@ -8,6 +8,7 @@
 #include "local_to_global.h"
 
 struct coord_t {
+    float z;
     float r;
     float phi;
 };
@@ -21,13 +22,13 @@ simple_coord_t correctCoords(coord_t centers, float tilt, float col, float row) 
     const float pix_z = 0.002924;
 
     simple_coord_t rv;
-    rv.z = centers.z + col * pix_z;
+    rv.z = centers.z + (col - 511) * pix_z;
 
     auto x = centers.r * std::cos(tilt);
-    auto y = centers.r * std::sin(tilt) -  row * pix_phi;
+    auto y = centers.r * std::sin(tilt) -  (row - 255) * pix_phi;
 
     rv.r = std::hypot(x, y);
-    rv.phi = centers.phi + tilt - std::arctan2(y, x);
+    rv.phi = centers.phi + tilt - std::atan2(y, x);
 
     return rv;
 }
@@ -54,7 +55,7 @@ int main() {
             // std::cout << layer << ", " << stave << ", " << chip << ", "
             //     << x << ", " << y << ", " << z << ", " << r << ", " << phi << std::endl;
 
-            coord_t coord{r, phi};
+            coord_t coord{z, r, phi};
             positionMap[std::make_tuple(layer, stave, chip)] = coord;
         }
     }
@@ -78,11 +79,15 @@ int main() {
         ssline >> layer >> stave >> chip >> col >> row;
 
         auto center_coord = positionMap[std::make_tuple(layer, stave, chip)];
+
+        std::cout << layer << ", " << stave << ", " << chip << ", row = " << row << ", col = " << col
+            << "\nCenters: " << center_coord.r << ", " << center_coord.phi << ", " << center_coord.z  << std::endl;
+
         auto corCoord = correctCoords(center_coord, phitilt[layer], col, row);
         out_t outval;  // these are the
         getCoords(0, layer, stave, chip, col, row, 3, outval);
-        std::cout << "Emulated: " << corCoord.x << ", " << corCoord.y << ", " << corCoord.z
-            << "\nHLS:      " << outval.x << ", " << outval.y << ", " << outval.z  << std::endl << std::endl;
+        std::cout << "Emulated: " << corCoord.r << ", " << corCoord.phi << ", " << corCoord.z
+            << "\nHLS:      " << outval.r << ", " << outval.phi << ", " << outval.z  << std::endl << std::endl;
         if (std::abs(corCoord.r - outval.r.to_float()) > 0.003 ||
             std::abs(corCoord.phi - outval.phi.to_float()) > 0.003 ||
             std::abs(corCoord.z - outval.z.to_float()) > 0.03) {
